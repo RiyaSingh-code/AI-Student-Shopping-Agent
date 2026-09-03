@@ -1,3 +1,4 @@
+from gemini_service import get_product_category
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -25,28 +26,38 @@ def chat(request: ChatRequest):
         "response": response
     }
 
-from recommendation import search_product
+from recommendation import recommend_product
 from compare import compare_products
 from recommend import recommend
 from checkout import generate_checkout
 
-query = input("What do you want to buy? ")
+user_query = input("What do you want to buy? ")
 
-products = search_product(query)
+query = get_product_category(user_query)
 
-compare_products(products)
+print(f"\nDetected Category: {query}")
 
-best_product = recommend(products)
+comparison = compare_products(query)
 
-print("\nRecommended Product:")
-print(f"Name: {best_product['name']}")
-print(f"Price: ₹{best_product['price']}")
-print(f"Rating: {best_product['rating']}")
+print("\nAvailable Products:\n")
 
-checkout = generate_checkout(best_product)
+for p in comparison:
+    print(
+        f"{p['name']} | ₹{p['price']} | Rating: {p['rating']}"
+    )
+recommended = recommend_product(user_query)
 
-print("\nCheckout Details:")
-print(f"Order ID: {checkout['order_id']}")
-print(f"Product: {checkout['product']}")
-print(f"Price: ₹{checkout['price']}")
-print(f"Checkout URL: {checkout['checkout_url']}")
+if recommended:
+    print("\nRecommended Product:")
+    print(recommended["name"])
+    print("Price:", recommended["price"])
+    print("Rating:", recommended["rating"])
+
+    print("\nReason:")
+    print(
+        f"{recommended['name']} was selected because "
+        f"it has one of the highest ratings within your budget "
+        f"and offers good value for a student buyer."
+)
+else:
+    print("\nNo product found within your budget.")
